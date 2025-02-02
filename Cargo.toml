@@ -1,0 +1,15 @@
+[package]
+name = "hackerwear-api"
+version = "0.0.1.dev"
+edition = "2021"
+
+[dependencies]
+serde = "1.0.217"
+serde_json = "1.0.137"
+surrealdb = "2.1.4"
+rocket = { version = "0.5.1", features = ['json'] }
+argon2 = "0.5.3"
+chrono = "0.4.39"
+jsonwebtoken = "9.3.0"
+uuid = "1.12.1"
+ring = "0.17.8"
