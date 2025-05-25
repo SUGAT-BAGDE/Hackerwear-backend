@@ -5,9 +5,9 @@ use surrealdb::{Error, Surreal};
 pub trait DatabaseIO {
     type Model : Serialize + Deserialize<'static>;
     
-    async fn init(db : &Surreal<Client>) -> Result<(), Error>;
-    async fn get_all(db : &Surreal<Client>) -> Vec<Self::Model>;
-    async fn save(self, db : &Surreal<Client>) -> Result<Self::Model, Error>;
+    fn init(db : &Surreal<Client>) ->  impl std::future::Future<Output = Result<(), Error>> + Send;
+    fn get_all(db : &Surreal<Client>) -> impl std::future::Future<Output = Vec<Self::Model>> + Send;
+    fn save(self, db : &Surreal<Client>) -> impl std::future::Future<Output = Result<Self::Model, Error>> + Send;
 }
 
 pub mod password_utils

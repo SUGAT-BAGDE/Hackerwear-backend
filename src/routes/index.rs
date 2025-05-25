@@ -8,7 +8,7 @@ use serde_json::json;
 use crate::utils::AppState;
 use crate::database::models::*;
 use crate::database::utils::password_utils::{hash_password, verify_password};
-use crate::utils::auth::generate_jwt;
+use crate::utils::auth::{generate_jwt, validate_jwt, Claims, JwtStatus};
 
 #[get("/")]
 pub fn index() -> Json<serde_json::Value> {
@@ -132,33 +132,53 @@ pub async fn login(credentials : Json<LoginCredentials>, state: &State<Arc<AppSt
 use rocket::http::Status;
 use rocket::request::{Outcome, FromRequest};
 
-struct JwtToken<'r>(&'r str);
-
 #[derive(Debug)]
 pub enum JwtError {
     Missing,
     Invalid,
+    Expired
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for JwtToken<'r> {
+impl<'r> FromRequest<'r> for Claims {
     type Error = JwtError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        fn is_valid(token: &str) -> bool {
-            token == "valid_api_key"
-        }
 
-        match req.headers().get_one("x-api-key") {
+        let is_valid = async |token: &str| {
+            
+            let outcome = req.guard::<&State<Arc<AppState>>>().await;
+
+            match outcome {
+                rocket::outcome::Outcome::Success(state) => {
+                    match validate_jwt(token, &state.jwt_key_pair) {
+                        JwtStatus::Valid(e) => Some(e),
+                        _ => None
+                    }
+                },
+                _ => None
+            }
+        };
+
+        match req.headers().get_one("Authorization") {
             None => Outcome::Error((Status::BadRequest, JwtError::Missing)),
-            Some(token) if is_valid(token) => Outcome::Success(JwtToken(token)),
+            
+            Some(str) if str.starts_with("Bearer ") => {
+                let token = &str[7..];
+
+                match is_valid(token).await {
+                    Some(e) => Outcome::Success(e),
+                    None => Outcome::Error((Status::Forbidden, JwtError::Invalid)),
+                }
+            },
+            
             Some(_) => Outcome::Error((Status::BadRequest, JwtError::Invalid)),
         }
     }
 }
 
 #[get("/verify-user")]
-pub async fn verify_user(token: JwtToken<'_>, state: &State<Arc<AppState>>) -> Json<serde_json::Value> {
-    todo!()
+pub fn verify_user(jwt_claims: Claims, _state: &State<Arc<AppState>>) -> Json<serde_json::Value> {
+    Json(json!({"success" : true, "message": "Token Valid", "id" : jwt_claims.jti }))
 }
 
