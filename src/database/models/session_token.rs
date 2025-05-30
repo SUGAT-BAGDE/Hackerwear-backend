@@ -24,6 +24,10 @@ pub struct SessionToken {
 impl DatabaseIO for SessionToken{
     type Model = SessionToken;
 
+    fn table_name() -> &'static str {
+        "session_token"
+    }
+
     async fn init(db: &Surreal<Client>) -> Result<(), Error> {
         let query_str = r#"
       DEFINE TABLE IF NOT EXISTS sessiontoken SCHEMAFULL;

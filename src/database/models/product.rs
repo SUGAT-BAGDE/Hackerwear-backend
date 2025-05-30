@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use rocket::serde::{Deserialize, Serialize};
 use surrealdb::engine::remote::ws::Client;
-use surrealdb::{Error, RecordId, Surreal};
+use surrealdb::{Error, RecordId, Surreal, sql::Value};
 use surrealdb::Error::Api;
 use surrealdb::error::Api::Query;
 use super::super::models::{DatabaseIO};
@@ -24,6 +26,10 @@ pub struct Product{
 
 impl DatabaseIO for Product{
     type Model = Product;
+
+    fn table_name() -> &'static str {
+        "Product"
+    }
 
     async fn init(db: &Surreal<Client>) -> Result<(), Error> {
         let query_str = r#"
@@ -76,5 +82,34 @@ impl DatabaseIO for Product{
                 product.ok_or(Api(Query("Failed to update product".to_string())))
             }
         }
+    }
+}
+
+
+impl Product {
+    pub async fn find(db: &Surreal<Client>, filters: HashMap<String, Value>) -> Result<Vec<Product>, Error> {
+        // Build dynamic WHERE clause
+        let mut where_clauses = Vec::new();
+        for key in filters.keys() {
+            where_clauses.push(format!("{key} = ${key}"));
+        }
+
+        let where_clause = if where_clauses.is_empty() {
+            "".to_string()
+        } else {
+            format!("WHERE {}", where_clauses.join(" AND "))
+        };
+
+        // Build and bind query dynamically
+        let query = format!("SELECT * FROM Product {}", where_clause);
+        let mut query_builder = db.query(&query);
+
+        for (key, val) in filters {
+            query_builder = query_builder.bind((key, val));
+        }
+
+        let mut response = query_builder.await?;
+        let result: Vec<Product> = response.take(0)?;
+        Ok(result)
     }
 }

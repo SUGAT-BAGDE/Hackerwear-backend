@@ -5,6 +5,8 @@ use surrealdb::{Error, Surreal};
 pub trait DatabaseIO {
     type Model : Serialize + Deserialize<'static>;
     
+    fn table_name() -> &'static str;
+    
     fn init(db : &Surreal<Client>) ->  impl std::future::Future<Output = Result<(), Error>> + Send;
     fn get_all(db : &Surreal<Client>) -> impl std::future::Future<Output = Vec<Self::Model>> + Send;
     fn save(self, db : &Surreal<Client>) -> impl std::future::Future<Output = Result<Self::Model, Error>> + Send;

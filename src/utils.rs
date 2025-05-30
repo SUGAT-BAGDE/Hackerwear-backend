@@ -57,7 +57,7 @@ pub fn extract_app_config_from_env() -> Result<AppConfig, String> {
             }
             #[cfg(not(debug_assertions))]
             {
-                "/etc/myapp/jwt_private_key.der".to_string()
+                "/etc/hackerwear-backend/jwt_private_key.der".to_string()
             }
         }
     };

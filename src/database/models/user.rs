@@ -19,6 +19,10 @@ pub struct User {
 impl DatabaseIO for User{
     type Model = User;
 
+    fn table_name() -> &'static str {
+        "User"
+    }
+
     async fn init(db: &Surreal<Client>) -> Result<(), Error> {
         let query_str = r#"
         DEFINE TABLE IF NOT EXISTS User SCHEMAFULL;

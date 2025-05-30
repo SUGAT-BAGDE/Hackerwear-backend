@@ -25,7 +25,7 @@ pub struct GroupedProduct {
     pub color: Vec<String>,
     pub size: Vec<String>,
     pub price: f32,
-    pub availableQty: u32,
+    pub available_qty: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ pub struct WrappedProducts {
     pub products: HashMap<String, GroupedProduct>,
 }
 
-#[get("/getproducts")]
+#[get("/get_products")]
 pub async fn get_products(state: &State<Arc<AppState>>) -> Json<WrappedProducts> {
     let products: Vec<Product> = Product::get_all(&state.db).await;
 
@@ -53,7 +53,7 @@ pub async fn get_products(state: &State<Arc<AppState>>) -> Json<WrappedProducts>
             color: vec![product.color.clone()],
             size: vec![product.size.clone()],
             price: product.price,
-            availableQty: product.stock_qty,
+            available_qty: product.stock_qty,
         });
 
         if !entry.color.contains(&product.color) {
@@ -128,7 +128,6 @@ pub async fn login(credentials : Json<LoginCredentials>, state: &State<Arc<AppSt
 }
 
 
-// todo : Write this route properly
 use rocket::http::Status;
 use rocket::request::{Outcome, FromRequest};
 
