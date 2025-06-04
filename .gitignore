@@ -24,5 +24,5 @@ target/
 security/
 
 # Any run script setup for running the app in dev environment 
-./dev_run.sh
+dev_run.sh
 
